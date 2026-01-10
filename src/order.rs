@@ -115,3 +115,71 @@ pub fn compare_sell_orders(a: &Order, b: &Order) -> Ordering {
                                                           // comparison
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_order_creation() {
+        let order = Order::new(1, Side::Buy, OrderType::Limit, 1000, 100, 1);
+        assert_eq!(order.id, 1);
+        assert_eq!(order.side, Side::Buy);
+        assert_eq!(order.price, 1000);
+        assert_eq!(order.quantity, 100);
+    }
+
+    #[test]
+    fn test_can_match_limit_orders() {
+        let buy_order = Order::new(1, Side::Buy, OrderType::Limit, 1050, 100, 1);
+        let sell_order = Order::new(2, Side::Sell, OrderType::Limit, 1000, 100, 2);
+
+        assert!(buy_order.can_match(&sell_order));
+        assert!(sell_order.can_match(&buy_order));
+    }
+
+    #[test]
+    fn test_cannot_match_same_side() {
+        let buy_order1 = Order::new(1, Side::Buy, OrderType::Limit, 1050, 100, 1);
+        let buy_order2 = Order::new(2, Side::Buy, OrderType::Limit, 1000, 100, 2);
+
+        assert!(!buy_order1.can_match(&buy_order2));
+    }
+
+    #[test]
+    fn test_cannot_match_prices_dont_cross() {
+        let buy_order = Order::new(1, Side::Buy, OrderType::Limit, 900, 100, 1);
+        let sell_order = Order::new(2, Side::Sell, OrderType::Limit, 1000, 100, 2);
+
+        assert!(!buy_order.can_match(&sell_order));
+    }
+
+    #[test]
+    fn test_compare_buy_orders() {
+        let order1 = Order::new(1, Side::Buy, OrderType::Limit, 1000, 100, 1);
+        let order2 = Order::new(2, Side::Buy, OrderType::Limit, 1050, 100, 2);
+
+        // Higher price (order2) should have higher priority
+        assert_eq!(compare_buy_orders(&order1, &order2), Ordering::Less);
+        assert_eq!(compare_buy_orders(&order2, &order1), Ordering::Greater);
+    }
+
+    #[test]
+    fn test_compare_buy_orders_same_price() {
+        let order1 = Order::new(1, Side::Buy, OrderType::Limit, 1000, 100, 1);
+        let order2 = Order::new(2, Side::Buy, OrderType::Limit, 1000, 100, 2);
+
+        // Earlier timestamp (order1) should have higher priority
+        assert_eq!(compare_buy_orders(&order1, &order2), Ordering::Greater);
+    }
+
+    #[test]
+    fn test_compare_sell_orders() {
+        let order1 = Order::new(1, Side::Sell, OrderType::Limit, 1000, 100, 1);
+        let order2 = Order::new(2, Side::Sell, OrderType::Limit, 1050, 100, 2);
+
+        // Lower price (order1) should have higher priority
+        assert_eq!(compare_sell_orders(&order1, &order2), Ordering::Greater);
+        assert_eq!(compare_sell_orders(&order2, &order1), Ordering::Less);
+    }
+}
