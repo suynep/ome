@@ -1,3 +1,4 @@
+mod matching_engine;
 mod order;
 mod order_book;
 
