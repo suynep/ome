@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use serde::{Deserialize, Serialize};
 
 // rudimentary types
 pub type OrderId = u64;
@@ -9,19 +10,19 @@ pub type Quantity = u64;
 
 pub type Timestamp = u64;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Side {
     Buy,
     Sell,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OrderType {
     Limit,
     Market,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Order {
     pub id: OrderId,
     pub side: Side,
@@ -72,7 +73,7 @@ impl Order {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Trade {
     pub buy_order_id: OrderId,
     pub sell_order_id: OrderId,

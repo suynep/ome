@@ -1,7 +1,10 @@
 [package]
 name = "ordeng-async"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
+axum = "0.8.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
 tokio = { version = "1.49.0", features=["full"] }
