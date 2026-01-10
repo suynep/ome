@@ -5,8 +5,7 @@
 use crate::order::{Order, OrderId, Side, compare_buy_orders, compare_sell_orders};
 use std::{
     cmp::Ordering,
-    collections::BinaryHeap,
-    collections::{HashMap, HashSet},
+    collections::{BTreeMap, HashMap, HashSet},
 };
 
 #[derive(Clone, Debug)]
@@ -41,122 +40,175 @@ impl Ord for OrderWrapper {
 }
 
 pub struct OrderBook {
-    buy_orders: BinaryHeap<OrderWrapper>,
-    sell_orders: BinaryHeap<OrderWrapper>,
-    orders_map: HashMap<OrderId, Order>,
+    bids: BTreeMap<u64, Vec<Order>>,
+    asks: BTreeMap<u64, Vec<Order>>,
+    orders_map: HashMap<OrderId, (Side, u64)>,
     canceled_orders: HashSet<OrderId>,
 }
 
 impl OrderBook {
     pub fn new() -> Self {
         OrderBook {
-            buy_orders: BinaryHeap::new(),
-            sell_orders: BinaryHeap::new(),
-            orders_map: HashMap::<OrderId, Order>::new(),
+            bids: BTreeMap::new(),
+            asks: BTreeMap::new(),
+            orders_map: HashMap::<OrderId, (Side, u64)>::new(),
             canceled_orders: HashSet::<OrderId>::new(),
         }
     }
 
     pub fn add_order(&mut self, order: Order) {
-        let order_id = order.id;
+        let price = order.price;
         let side = order.side;
-
-        // to lookup map
-        self.orders_map.insert(order_id, order.clone());
-
-        let wrapper = OrderWrapper {
-            order,
-            is_buy: side == Side::Buy,
-        };
-
-        // to the appropriate side
+        self.orders_map.insert(order.id, (side, price));
         match side {
-            Side::Buy => self.buy_orders.push(wrapper),
-            Side::Sell => self.sell_orders.push(wrapper),
+            Side::Buy => {
+                let q = self.bids.entry(price).or_insert_with(Vec::new);
+                // Insert preserving timestamp ascending (earlier first)
+                let pos = q
+                    .iter()
+                    .position(|o| o.timestamp > order.timestamp)
+                    .unwrap_or(q.len());
+                q.insert(pos, order);
+            }
+            Side::Sell => {
+                let q = self.asks.entry(price).or_insert_with(Vec::new);
+                let pos = q
+                    .iter()
+                    .position(|o| o.timestamp > order.timestamp)
+                    .unwrap_or(q.len());
+                q.insert(pos, order);
+            }
         }
     }
 
     // the following peek functions return the best buy/sell without removing them from the heap
     pub fn peek_best_buy(&mut self) -> Option<Order> {
-        while let Some(wrapper) = self.buy_orders.peek() {
-            if self.canceled_orders.contains(&wrapper.order.id) {
-                self.buy_orders.pop();
-            } else {
-                return Some(wrapper.order.clone());
+        loop {
+            let (best_price, _) = match self.bids.last_key_value() {
+                Some((p, q)) => (*p, q),
+                None => return None,
+            };
+
+            if let Some(q) = self.bids.get_mut(&best_price) {
+                while let Some(front) = q.first() {
+                    if self.canceled_orders.contains(&front.id) {
+                        let removed = q.remove(0);
+                        self.orders_map.remove(&removed.id);
+                        continue;
+                    }
+                    return Some(front.clone());
+                }
+
+                if q.is_empty() {
+                    self.bids.remove(&best_price);
+                    continue;
+                }
             }
         }
-        None
     }
+
     pub fn peek_best_sell(&mut self) -> Option<Order> {
-        while let Some(wrapper) = self.sell_orders.peek() {
-            if self.canceled_orders.contains(&wrapper.order.id) {
-                self.sell_orders.pop();
-            } else {
-                return Some(wrapper.order.clone());
+        loop {
+            let (best_price, _) = match self.asks.first_key_value() {
+                Some((p, q)) => (*p, q),
+                None => return None,
+            };
+
+            if let Some(q) = self.asks.get_mut(&best_price) {
+                while let Some(front) = q.first() {
+                    if self.canceled_orders.contains(&front.id) {
+                        let removed = q.remove(0);
+                        self.orders_map.remove(&removed.id);
+                        continue;
+                    }
+                    return Some(front.clone());
+                }
+                if q.is_empty() {
+                    self.asks.remove(&best_price);
+                    continue;
+                }
             }
         }
-        None
     }
 
     pub fn pop_best_buy(&mut self) -> Option<Order> {
         loop {
-            match self.buy_orders.pop() {
-                Some(wrapper) => {
-                    if !self.canceled_orders.contains(&wrapper.order.id) {
-                        self.orders_map.remove(&wrapper.order.id);
-                        return Some(wrapper.order);
+            let best_price = match self.bids.last_key_value() {
+                Some((p, _)) => *p,
+                None => return None,
+            };
+
+            if let Some(q) = self.bids.get_mut(&best_price) {
+                while let Some(front) = q.first() {
+                    if self.canceled_orders.contains(&front.id) {
+                        let removed = q.remove(0);
+                        self.orders_map.remove(&removed.id);
+                        continue;
                     }
+                    let popped = q.remove(0);
+                    self.orders_map.remove(&popped.id);
+                    if q.is_empty() {
+                        self.bids.remove(&best_price);
+                    }
+
+                    return Some(popped);
                 }
 
-                None => return None,
+                self.bids.remove(&best_price);
             }
         }
     }
+
     pub fn pop_best_sell(&mut self) -> Option<Order> {
         loop {
-            match self.sell_orders.pop() {
-                Some(wrapper) => {
-                    if !self.canceled_orders.contains(&wrapper.order.id) {
-                        self.orders_map.remove(&wrapper.order.id);
-                        return Some(wrapper.order);
+            let best_price = match self.asks.first_key_value() {
+                Some((p, _)) => *p,
+                None => return None,
+            };
+
+            if let Some(q) = self.asks.get_mut(&best_price) {
+                while let Some(front) = q.first() {
+                    if self.canceled_orders.contains(&front.id) {
+                        let removed = q.remove(0);
+                        self.orders_map.remove(&removed.id);
+                        continue;
                     }
+                    let popped = q.remove(0);
+                    self.orders_map.remove(&popped.id);
+                    if q.is_empty() {
+                        self.asks.remove(&best_price);
+                    }
+                    return Some(popped);
                 }
 
-                None => return None,
+                self.asks.remove(&best_price);
             }
         }
     }
-
-    pub fn cancel_order(&mut self, order_id: OrderId) -> bool {
-        if self.orders_map.contains_key(&order_id) {
-            self.canceled_orders.insert(order_id);
-            self.orders_map.remove(&order_id);
-            true
-        } else {
-            false
-        }
-    }
-
     /// Returns all active buy orders sorted by priority (best first)
     pub fn get_buy_orders(&self) -> Vec<Order> {
-        let mut orders: Vec<Order> = self
-            .orders_map
-            .values()
-            .filter(|o| o.side == Side::Buy && !self.canceled_orders.contains(&o.id))
-            .cloned()
-            .collect();
+        let mut orders: Vec<Order> = Vec::new();
+        for (_p, q) in self.bids.iter().rev() {
+            for o in q.iter() {
+                if !self.canceled_orders.contains(&o.id) {
+                    orders.push(o.clone());
+                }
+            }
+        }
         orders.sort_by(compare_buy_orders);
         orders
     }
 
     /// Returns all active sell orders sorted by priority (best first)
     pub fn get_sell_orders(&self) -> Vec<Order> {
-        let mut orders: Vec<Order> = self
-            .orders_map
-            .values()
-            .filter(|o| o.side == Side::Sell && !self.canceled_orders.contains(&o.id))
-            .cloned()
-            .collect();
+        let mut orders: Vec<Order> = Vec::new();
+        for (_p, q) in self.asks.iter() {
+            for o in q.iter() {
+                if !self.canceled_orders.contains(&o.id) {
+                    orders.push(o.clone());
+                }
+            }
+        }
         orders.sort_by(compare_sell_orders);
         orders
     }
