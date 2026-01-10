@@ -87,6 +87,7 @@ cargo run
 ```
 
 ### Test
+The tests are added to each of the *aforementioned* modules under the `mod tests` augmented with `#[cfg(test)]` attribute *(prensently, 18 tests exist for unit testing)*. You can run them as:
 ```bash
 cargo test
 ```
