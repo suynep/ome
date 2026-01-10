@@ -99,19 +99,19 @@ impl Trade {
 
 pub fn compare_buy_orders(a: &Order, b: &Order) -> Ordering {
     match a.price.cmp(&b.price) {
-        Ordering::Greater => Ordering::Greater,
-        Ordering::Less => Ordering::Less,
-        Ordering::Equal => b.timestamp.cmp(&a.timestamp), // if same price, we move to timestamp
+        Ordering::Greater => Ordering::Less,
+        Ordering::Less => Ordering::Greater,
+        Ordering::Equal => a.timestamp.cmp(&b.timestamp), // if same price, we move to timestamp
                                                           // comparison
     }
 }
 
 pub fn compare_sell_orders(a: &Order, b: &Order) -> Ordering {
     match a.price.cmp(&b.price) {
-        Ordering::Less => Ordering::Greater, // reverse of the above (since lower sell prices are
+        Ordering::Less => Ordering::Less, // reverse of the above (since lower sell prices are
         // given priority)
-        Ordering::Greater => Ordering::Less,
-        Ordering::Equal => b.timestamp.cmp(&a.timestamp), // if same price, we move to timestamp
+        Ordering::Greater => Ordering::Greater,
+        Ordering::Equal => a.timestamp.cmp(&b.timestamp), // if same price, we move to timestamp
                                                           // comparison
     }
 }
@@ -160,8 +160,8 @@ mod tests {
         let order2 = Order::new(2, Side::Buy, OrderType::Limit, 1050, 100, 2);
 
         // Higher price (order2) should have higher priority
-        assert_eq!(compare_buy_orders(&order1, &order2), Ordering::Less);
-        assert_eq!(compare_buy_orders(&order2, &order1), Ordering::Greater);
+        assert_eq!(compare_buy_orders(&order1, &order2), Ordering::Greater);
+        assert_eq!(compare_buy_orders(&order2, &order1), Ordering::Less);
     }
 
     #[test]
@@ -170,7 +170,7 @@ mod tests {
         let order2 = Order::new(2, Side::Buy, OrderType::Limit, 1000, 100, 2);
 
         // Earlier timestamp (order1) should have higher priority
-        assert_eq!(compare_buy_orders(&order1, &order2), Ordering::Greater);
+        assert_eq!(compare_buy_orders(&order1, &order2), Ordering::Less);
     }
 
     #[test]
@@ -179,7 +179,7 @@ mod tests {
         let order2 = Order::new(2, Side::Sell, OrderType::Limit, 1050, 100, 2);
 
         // Lower price (order1) should have higher priority
-        assert_eq!(compare_sell_orders(&order1, &order2), Ordering::Greater);
-        assert_eq!(compare_sell_orders(&order2, &order1), Ordering::Less);
+        assert_eq!(compare_sell_orders(&order1, &order2), Ordering::Less);
+        assert_eq!(compare_sell_orders(&order2, &order1), Ordering::Greater);
     }
 }
