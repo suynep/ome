@@ -167,3 +167,28 @@ impl Default for OrderBook {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::order::{Order, OrderType};
+
+    #[test]
+    fn test_add_and_peek_orders() {
+        let mut book = OrderBook::new();
+
+        let buy1 = Order::new(1, Side::Buy, OrderType::Limit, 1000, 100, 1);
+        let buy2 = Order::new(2, Side::Buy, OrderType::Limit, 1060, 100, 2);
+        let sell1 = Order::new(3, Side::Sell, OrderType::Limit, 1100, 100, 3);
+
+        book.add_order(buy1);
+        book.add_order(buy2);
+        book.add_order(sell1);
+
+        let best_buy = book.peek_best_buy().unwrap();
+        let best_sell = book.peek_best_sell().unwrap();
+
+        assert_eq!(best_buy.id, 2);
+        assert_eq!(best_sell.id, 3);
+    }
+}
