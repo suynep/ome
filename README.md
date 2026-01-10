@@ -1,6 +1,7 @@
 # Order Matching Engine
 
 > An OME featuring price/time priority matching methodology implemented with <3 and BTreeMaps
+> Jump to [Reproducing the PDF example](https://github.com/suynep/ome?tab=readme-ov-file#reproducing-the-example-in-the-given-pdf) section
 
 ## Overview
 
