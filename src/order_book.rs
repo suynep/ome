@@ -57,5 +57,33 @@ impl OrderBook {
         }
     }
 
-    pub fn add_order(&mut self, order: Order) {}
+    pub fn add_order(&mut self, order: Order) {
+        let order_id = order.id;
+        let side = order.side;
+
+        // to lookup map
+        self.orders_map.insert(order_id, order.clone());
+
+        let wrapper = OrderWrapper {
+            order,
+            is_buy: side == Side::Buy,
+        };
+
+        // to the appropriate side
+        match side {
+            Side::Buy => self.buy_orders.push(wrapper),
+            Side::Sell => self.sell_orders.push(wrapper),
+        }
+    }
+
+    pub fn peek_best_buy(&mut self) -> Option<Order> {
+        while let Some(wrapper) = self.buy_orders.peek() {
+            if self.canceled_orders.contains(&wrapper.order.id) {
+                self.buy_orders.pop();
+            } else {
+                return Some(wrapper.order.clone());
+            }
+        }
+        None
+    }
 }
