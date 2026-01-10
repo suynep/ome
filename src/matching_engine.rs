@@ -135,3 +135,108 @@ impl Clone for MatchingEngine {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::order::OrderType;
+
+    #[tokio::test]
+    async fn test_matching_engine_creation() {
+        let engine = MatchingEngine::new();
+        let buy_orders = engine.get_buy_orders().await;
+        let sell_orders = engine.get_sell_orders().await;
+        
+        assert_eq!(buy_orders.len(), 0);
+        assert_eq!(sell_orders.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_order_id_generation() {
+        let engine = MatchingEngine::new();
+        let id1 = engine.next_id().await;
+        let id2 = engine.next_id().await;
+        let id3 = engine.next_id().await;
+        
+        assert_eq!(id1, 1);
+        assert_eq!(id2, 2);
+        assert_eq!(id3, 3);
+    }
+
+    #[tokio::test]
+    async fn test_timestamp_generation() {
+        let engine = MatchingEngine::new();
+        let ts1 = engine.next_timestamp().await;
+        let ts2 = engine.next_timestamp().await;
+        let ts3 = engine.next_timestamp().await;
+        
+        assert_eq!(ts1, 1);
+        assert_eq!(ts2, 2);
+        assert_eq!(ts3, 3);
+    }
+
+    #[tokio::test]
+    async fn test_limit_order_matching() {
+        let engine = MatchingEngine::new();
+        
+        // Submit a sell order
+        let sell_order = Order::new(1, Side::Sell, OrderType::Limit, 1000, 100, 1);
+        engine.submit_order(sell_order).await;
+        
+        // Submit a matching buy order
+        let buy_order = Order::new(2, Side::Buy, OrderType::Limit, 1050, 100, 2);
+        let trades = engine.submit_order(buy_order).await;
+        
+        assert_eq!(trades.len(), 1);
+        assert_eq!(trades[0].buy_order_id, 2);
+        assert_eq!(trades[0].sell_order_id, 1);
+        assert_eq!(trades[0].price, 1000);
+        assert_eq!(trades[0].quantity, 100);
+        
+        let buy_orders = engine.get_buy_orders().await;
+        let sell_orders = engine.get_sell_orders().await;
+        assert_eq!(buy_orders.len(), 0);
+        assert_eq!(sell_orders.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_partial_fill() {
+        let engine = MatchingEngine::new();
+        
+        // Submit a large sell order
+        let sell_order = Order::new(1, Side::Sell, OrderType::Limit, 1000, 200, 1);
+        engine.submit_order(sell_order).await;
+        
+        // Submit a smaller matching buy order
+        let buy_order = Order::new(2, Side::Buy, OrderType::Limit, 1050, 100, 2);
+        let trades = engine.submit_order(buy_order).await;
+        
+        assert_eq!(trades.len(), 1);
+        assert_eq!(trades[0].quantity, 100);
+        
+        // Check that remaining sell order is in the book
+        let sell_orders = engine.get_sell_orders().await;
+        assert_eq!(sell_orders.len(), 1);
+        assert_eq!(sell_orders[0].quantity, 100);
+    }
+
+    #[tokio::test]
+    async fn test_limit_order_no_match() {
+        let engine = MatchingEngine::new();
+        
+        // Submit a sell order
+        let sell_order = Order::new(1, Side::Sell, OrderType::Limit, 1000, 100, 1);
+        engine.submit_order(sell_order).await;
+        
+        // Submit a non-matching buy order (price too low)
+        let buy_order = Order::new(2, Side::Buy, OrderType::Limit, 900, 100, 2);
+        let trades = engine.submit_order(buy_order).await;
+        
+        assert_eq!(trades.len(), 0);
+        
+        let buy_orders = engine.get_buy_orders().await;
+        let sell_orders = engine.get_sell_orders().await;
+        assert_eq!(buy_orders.len(), 1);
+        assert_eq!(sell_orders.len(), 1);
+    }
+}

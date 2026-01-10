@@ -209,4 +209,88 @@ mod tests {
         assert_eq!(best_buy.id, 2);
         assert_eq!(best_sell.id, 3);
     }
+
+    #[test]
+    fn test_pop_best_orders() {
+        let mut book = OrderBook::new();
+
+        let buy1 = Order::new(1, Side::Buy, OrderType::Limit, 1000, 100, 1);
+        let buy2 = Order::new(2, Side::Buy, OrderType::Limit, 1060, 100, 2);
+        let sell1 = Order::new(3, Side::Sell, OrderType::Limit, 1100, 100, 3);
+
+        book.add_order(buy1);
+        book.add_order(buy2);
+        book.add_order(sell1);
+
+        let best_buy = book.pop_best_buy().unwrap();
+        let best_sell = book.pop_best_sell().unwrap();
+
+        assert_eq!(best_buy.id, 2);
+        assert_eq!(best_sell.id, 3);
+
+        // Orders should be removed from the book
+        assert!(book.peek_best_buy().is_some()); // buy1 still there
+        assert_eq!(book.peek_best_buy().unwrap().id, 1);
+        assert!(book.peek_best_sell().is_none());
+    }
+
+    #[test]
+    fn test_order_retrieval() {
+        let mut book = OrderBook::new();
+
+        // Test that we can add and retrieve orders with get_* methods
+        let buy1 = Order::new(1, Side::Buy, OrderType::Limit, 1000, 100, 2);
+        let buy2= Order::new(2, Side::Buy, OrderType::Limit, 1001, 100, 5);
+        book.add_order(buy1);
+        book.add_order(buy2);
+
+        let buy_orders = book.get_buy_orders();
+        assert_eq!(buy_orders.len(), 2);
+        assert_eq!(buy_orders[0].id, 2);
+
+        let sell1 = Order::new(3, Side::Sell, OrderType::Limit, 1100, 100, 3);
+        let sell2 = Order::new(4, Side::Sell, OrderType::Limit, 1100, 100, 2);
+        book.add_order(sell1);
+        book.add_order(sell2);
+
+        let sell_orders = book.get_sell_orders();
+        assert_eq!(sell_orders.len(), 2);
+        assert_eq!(sell_orders[0].id, 4);
+    }
+
+    #[test]
+    fn test_same_price_timestamp_priority() {
+        let mut book = OrderBook::new();
+
+        // Buy orders at same price - earlier timestamp should have priority
+        let buy1 = Order::new(1, Side::Buy, OrderType::Limit, 1000, 100, 5);
+        let buy2 = Order::new(2, Side::Buy, OrderType::Limit, 1000, 100, 2);
+
+        book.add_order(buy1);
+        book.add_order(buy2);
+
+        let best = book.pop_best_buy().unwrap();
+        assert_eq!(best.id, 2); // Earlier timestamp should be popped first
+    }
+
+    #[test]
+    fn test_multiple_price_levels() {
+        let mut book = OrderBook::new();
+
+        let buy1 = Order::new(1, Side::Buy, OrderType::Limit, 1000, 100, 1);
+        let buy2 = Order::new(2, Side::Buy, OrderType::Limit, 1020, 100, 2);
+        let buy3 = Order::new(3, Side::Buy, OrderType::Limit, 1040, 100, 3);
+
+        book.add_order(buy1);
+        book.add_order(buy2);
+        book.add_order(buy3);
+
+        let mut orders = Vec::new();
+        while let Some(order) = book.pop_best_buy() {
+            orders.push(order.id);
+        }
+
+        // Should be popped in descending price order: 1040, 1020, 1000
+        assert_eq!(orders, vec![3, 2, 1]);
+    }
 }
