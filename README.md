@@ -167,7 +167,9 @@ curl -X POST "http://localhost:8080/orders" \
  #### Add the order that essentially executes a Trade
 
  ```bash
- curl -X POST "http://localhost:8080/orders" -H "Content-Type: application/json" -d '{"side": "Buy", "order_type": "Limit", "price": 1050, "quantity": 150}' | jq
+curl -X POST "http://localhost:8080/orders" \
+-H "Content-Type: application/json" \
+-d '{"side": "Buy", "order_type": "Limit", "price": 1050, "quantity": 150}' | jq
  ```
 
  **Note the response at this point** (especially the `trade` field, which shows the matches of each pre-existing order). The output you see is the one expected in the `pdf`. *QED*.
