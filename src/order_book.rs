@@ -76,6 +76,7 @@ impl OrderBook {
         }
     }
 
+    // the following peek functions return the best buy/sell without removing them from the heap
     pub fn peek_best_buy(&mut self) -> Option<Order> {
         while let Some(wrapper) = self.buy_orders.peek() {
             if self.canceled_orders.contains(&wrapper.order.id) {
@@ -85,5 +86,84 @@ impl OrderBook {
             }
         }
         None
+    }
+    pub fn peek_best_sell(&mut self) -> Option<Order> {
+        while let Some(wrapper) = self.sell_orders.peek() {
+            if self.canceled_orders.contains(&wrapper.order.id) {
+                self.sell_orders.pop();
+            } else {
+                return Some(wrapper.order.clone());
+            }
+        }
+        None
+    }
+
+    pub fn pop_best_buy(&mut self) -> Option<Order> {
+        loop {
+            match self.buy_orders.pop() {
+                Some(wrapper) => {
+                    if !self.canceled_orders.contains(&wrapper.order.id) {
+                        self.orders_map.remove(&wrapper.order.id);
+                        return Some(wrapper.order);
+                    }
+                }
+
+                None => return None,
+            }
+        }
+    }
+    pub fn pop_best_sell(&mut self) -> Option<Order> {
+        loop {
+            match self.sell_orders.pop() {
+                Some(wrapper) => {
+                    if !self.canceled_orders.contains(&wrapper.order.id) {
+                        self.orders_map.remove(&wrapper.order.id);
+                        return Some(wrapper.order);
+                    }
+                }
+
+                None => return None,
+            }
+        }
+    }
+
+    pub fn cancel_order(&mut self, order_id: OrderId) -> bool {
+        if self.orders_map.contains_key(&order_id) {
+            self.canceled_orders.insert(order_id);
+            self.orders_map.remove(&order_id);
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Returns all active buy orders sorted by priority (best first)
+    pub fn get_buy_orders(&self) -> Vec<Order> {
+        let mut orders: Vec<Order> = self
+            .orders_map
+            .values()
+            .filter(|o| o.side == Side::Buy && !self.canceled_orders.contains(&o.id))
+            .cloned()
+            .collect();
+        orders.sort_by(compare_buy_orders);
+        orders
+    }
+
+    /// Returns all active sell orders sorted by priority (best first)
+    pub fn get_sell_orders(&self) -> Vec<Order> {
+        let mut orders: Vec<Order> = self
+            .orders_map
+            .values()
+            .filter(|o| o.side == Side::Sell && !self.canceled_orders.contains(&o.id))
+            .cloned()
+            .collect();
+        orders.sort_by(compare_sell_orders);
+        orders
+    }
+}
+
+impl Default for OrderBook {
+    fn default() -> Self {
+        Self::new()
     }
 }
