@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 // rudimentary types
 pub type OrderId = u64;
 
@@ -67,5 +69,48 @@ impl Order {
             _ => true, // market type orders always match with the best avail order (of opposite
                        // col. obviously)
         }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Trade {
+    pub buy_order_id: OrderId,
+    pub sell_order_id: OrderId,
+    pub price: Price,
+    pub quantity: Quantity,
+}
+
+impl Trade {
+    pub fn new(
+        buy_order_id: OrderId,
+        sell_order_id: OrderId,
+        price: Price,
+        quantity: Quantity,
+    ) -> Self {
+        Trade {
+            buy_order_id,
+            sell_order_id,
+            price,
+            quantity,
+        }
+    }
+}
+
+pub fn compare_buy_orders(a: &Order, b: &Order) -> Ordering {
+    match a.price.cmp(&b.price) {
+        Ordering::Greater => Ordering::Greater,
+        Ordering::Less => Ordering::Less,
+        Ordering::Equal => b.timestamp.cmp(&a.timestamp), // if same price, we move to timestamp
+                                                          // comparison
+    }
+}
+
+pub fn compare_sell_orders(a: &Order, b: &Order) -> Ordering {
+    match a.price.cmp(&b.price) {
+        Ordering::Less => Ordering::Greater, // reverse of the above (since lower sell prices are
+        // given priority)
+        Ordering::Greater => Ordering::Less,
+        Ordering::Equal => b.timestamp.cmp(&a.timestamp), // if same price, we move to timestamp
+                                                          // comparison
     }
 }
