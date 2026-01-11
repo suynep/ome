@@ -106,6 +106,7 @@ The engine exposes a simple HTTP API using Axum.
 #### Endpoints
 - `GET /orderbook` → returns current bids and asks.
 - `POST /orders` → submits a new order and returns executed trades + updated orderbook.
+- `DELETE /orders/:id/cancel` → cancel an order by its `id`
 
 #### Start the server
 ```bash
