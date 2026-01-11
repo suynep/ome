@@ -3,6 +3,15 @@ use crate::order_book::OrderBook;
 
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use serde::Serialize;
+
+#[derive(Debug, Serialize, Clone)]
+pub enum CancelResult {
+    Success(Order),                    // Successfully canceled; returns the canceled order
+    NotFound,                          // Order ID doesn't exist
+    AlreadyCanceled,                   // Order was already canceled
+    FullyMatched,                      // Order was already fully matched (not in book)
+}
 
 pub struct MatchingEngine {
     order_book: Arc<RwLock<OrderBook>>,
@@ -106,6 +115,34 @@ impl MatchingEngine {
 
         new_trades
     }
+
+    /// Cancel an order by ID. Returns the canceled order or an error status.
+    pub async fn cancel_order(&self, order_id: OrderId) -> CancelResult {
+        let mut order_book = self.order_book.write().await;
+        
+        // Check if order exists in the order map
+        let order_info = match order_book.get_order_info(order_id) {
+            Some((side, price)) => (side, price),
+            None => return CancelResult::NotFound,
+        };
+
+        // Check if already canceled
+        if order_book.is_order_canceled(order_id) {
+            return CancelResult::AlreadyCanceled;
+        }
+
+        // Get the order details BEFORE marking it as canceled
+        let order = match order_book.get_order_by_id(order_id, order_info.0, order_info.1) {
+            Some(o) => o,
+            None => return CancelResult::NotFound, // Shouldn't happen, but fallback
+        };
+
+        // Mark order as canceled
+        order_book.mark_order_canceled(order_id);
+
+        CancelResult::Success(order)
+    }
+
     /// Returns the current state of the order book (all active buy orders)
     pub async fn get_buy_orders(&self) -> Vec<Order> {
         let order_book = self.order_book.read().await;
@@ -238,5 +275,61 @@ mod tests {
         let sell_orders = engine.get_sell_orders().await;
         assert_eq!(buy_orders.len(), 1);
         assert_eq!(sell_orders.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_cancel_pending_order() {
+        let engine = MatchingEngine::new();
+
+        // Submit a limit order that won't match
+        let buy_order = Order::new(1, Side::Buy, OrderType::Limit, 900, 100, 1);
+        engine.submit_order(buy_order).await;
+
+        let buy_orders = engine.get_buy_orders().await;
+        assert_eq!(buy_orders.len(), 1);
+
+        // Cancel the order
+        let result = engine.cancel_order(1).await;
+        match result {
+            CancelResult::Success(order) => {
+                assert_eq!(order.id, 1);
+                assert_eq!(order.quantity, 100);
+            }
+            _ => panic!("Expected successful cancellation"),
+        }
+
+        // Order should no longer appear in order book
+        let buy_orders = engine.get_buy_orders().await;
+        assert_eq!(buy_orders.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_cancel_nonexistent_order() {
+        let engine = MatchingEngine::new();
+
+        let result = engine.cancel_order(999).await;
+        match result {
+            CancelResult::NotFound => {}
+            _ => panic!("Expected NotFound"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_cancel_already_canceled_order() {
+        let engine = MatchingEngine::new();
+
+        let buy_order = Order::new(1, Side::Buy, OrderType::Limit, 900, 100, 1);
+        engine.submit_order(buy_order).await;
+
+        // First cancellation succeeds
+        let result1 = engine.cancel_order(1).await;
+        assert!(matches!(result1, CancelResult::Success(_)));
+
+        // Second cancellation should fail
+        let result2 = engine.cancel_order(1).await;
+        match result2 {
+            CancelResult::AlreadyCanceled => {}
+            _ => panic!("Expected AlreadyCanceled"),
+        }
     }
 }

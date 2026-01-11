@@ -3,8 +3,8 @@ mod order;
 mod order_book;
 
 use axum::{
-    extract::State,
-    routing::{get, post},
+    extract::{State, Path},
+    routing::{get, post, delete},
     Json, Router,
 };
 
@@ -41,6 +41,7 @@ async fn main() {
     let app = Router::new()
         .route("/orderbook", get(get_orderbook))
         .route("/orders", post(post_order))
+        .route("/orders/{id}/cancel", delete(cancel_order))
         .with_state(engine);
 
     let addr: SocketAddr = SocketAddr::from(([0, 0, 0, 0], 61666));
@@ -73,4 +74,17 @@ async fn post_order(
         trades,
         orderbook: OrderBookView { bids, asks },
     })
+}
+
+async fn cancel_order(
+    State(engine): State<MatchingEngine>,
+    Path(order_id): Path<u64>,
+) -> Json<CancelResponse> {
+    let result = engine.cancel_order(order_id).await;
+    Json(CancelResponse { result })
+}
+
+#[derive(Debug, Serialize)]
+struct CancelResponse {
+    result: matching_engine::CancelResult,
 }

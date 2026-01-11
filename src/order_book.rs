@@ -178,6 +178,34 @@ impl OrderBook {
         orders.sort_by(compare_sell_orders);
         orders
     }
+
+    /// Get order info: (side, price). Used for cancellation lookups.
+    pub fn get_order_info(&self, order_id: OrderId) -> Option<(Side, u64)> {
+        self.orders_map.get(&order_id).copied()
+    }
+
+    /// Check if an order is already canceled
+    pub fn is_order_canceled(&self, order_id: OrderId) -> bool {
+        self.canceled_orders.contains(&order_id)
+    }
+
+    /// Mark an order as canceled
+    pub fn mark_order_canceled(&mut self, order_id: OrderId) {
+        self.canceled_orders.insert(order_id);
+    }
+
+    /// Retrieve a full order by ID, side, and price. Returns None if not found.
+    pub fn get_order_by_id(&self, order_id: OrderId, side: Side, price: u64) -> Option<Order> {
+        let queue = match side {
+            Side::Buy => self.bids.get(&price)?,
+            Side::Sell => self.asks.get(&price)?,
+        };
+
+        queue
+            .iter()
+            .find(|o| o.id == order_id)
+            .cloned()
+    }
 }
 
 impl Default for OrderBook {
