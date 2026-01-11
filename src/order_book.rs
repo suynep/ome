@@ -201,10 +201,7 @@ impl OrderBook {
             Side::Sell => self.asks.get(&price)?,
         };
 
-        queue
-            .iter()
-            .find(|o| o.id == order_id)
-            .cloned()
+        queue.iter().find(|o| o.id == order_id).cloned()
     }
 }
 

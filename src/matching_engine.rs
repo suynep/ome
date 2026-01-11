@@ -1,16 +1,16 @@
 use crate::order::{Order, OrderId, OrderType, Side, Timestamp, Trade};
 use crate::order_book::OrderBook;
 
+use serde::Serialize;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::Serialize;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum CancelResult {
-    Success(Order),                    // Successfully canceled; returns the canceled order
-    NotFound,                          // Order ID doesn't exist
-    AlreadyCanceled,                   // Order was already canceled
-    FullyMatched,                      // Order was already fully matched (not in book)
+    Success(Order),  // Successfully canceled; returns the canceled order
+    NotFound,        // Order ID doesn't exist
+    AlreadyCanceled, // Order was already canceled
+    FullyMatched,    // Order was already fully matched (not in book)
 }
 
 pub struct MatchingEngine {
@@ -39,10 +39,10 @@ impl MatchingEngine {
         current
     }
 
+    // this is for demo purposes ONLY, in prod
+    // env, you'll set the CURRENT time as the
+    // timestamp
     pub async fn next_timestamp(&self) -> Timestamp {
-        // this is for demo purposes ONLY, in prod
-        // env, you'll set the CURRENT time as the
-        // timestamp
         let mut timestamp = self.current_timestamp.write().await;
         let current = *timestamp;
         *timestamp += 1; //
@@ -119,7 +119,7 @@ impl MatchingEngine {
     /// Cancel an order by ID. Returns the canceled order or an error status.
     pub async fn cancel_order(&self, order_id: OrderId) -> CancelResult {
         let mut order_book = self.order_book.write().await;
-        
+
         // Check if order exists in the order map
         let order_info = match order_book.get_order_info(order_id) {
             Some((side, price)) => (side, price),
