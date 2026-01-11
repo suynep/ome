@@ -9,6 +9,10 @@
 
 This project implements a complete order matching engine similar to those used in electronic trading systems by exchanges, trading platforms, and brokerage firms. The engine matches buy and sell orders for financial instruments using strict price/time priority rules.
 
+## Assumptions
+1. *Market Orders* are *canceled* when there is no Order in the oppposing side
+2. *Timestamps* are POSIX time *(current implementation uses `u64` starting from `1`, however, since POSIX timestamps are `u64`s there should be a 1-to-1 bijection between this impl and the actual timestamp usage)*
+
 ## Architecture
 
 The system is built with three core modules:
