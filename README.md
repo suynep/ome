@@ -178,8 +178,3 @@ curl -X POST "http://localhost:61666/orders" -H "Content-Type: application/json"
  ```
 
  **Note the response at this point** (especially the `trade` field, which shows the matches of each pre-existing order). The output you see is the one expected in the `pdf`. *QED*.
-
-## Limitations
-1. Persistent Storage not present as of now
-2. Multi-threaded tests not implemented (though the functionality is implemented with multithreaded operations in mind)
-3. Actual POSIX timestamps not implemented (see *Assumptions* section for the rationale)
