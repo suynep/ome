@@ -5,6 +5,9 @@
 
 > Jump to [Reproducing the PDF example](https://github.com/suynep/ome?tab=readme-ov-file#reproducing-the-example-in-the-given-pdf) section
 
+
+> Update [jan. 11]: Add `f64` support for price and orderbook snapshot not returned on every post
+
 ## Overview
 
 This project implements a complete order matching engine similar to those used in electronic trading systems by exchanges, trading platforms, and brokerage firms. The engine matches buy and sell orders for financial instruments using strict price/time priority rules.
