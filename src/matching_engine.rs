@@ -7,10 +7,10 @@ use tokio::sync::RwLock;
 
 #[derive(Debug, Serialize, Clone)]
 pub enum CancelResult {
-    Success(Order),  // Successfully canceled; returns the canceled order
-    NotFound,        // Order ID doesn't exist
+    Success(Order), // Successfully canceled; returns the canceled order
+    NotFound,       // Order ID doesn't exist
     AlreadyCanceled, // Order was already canceled
-    FullyMatched,    // Order was already fully matched (not in book)
+                    // FullyMatched,    // Order was already fully matched (not in book)
 }
 
 pub struct MatchingEngine {
