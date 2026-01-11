@@ -1,5 +1,5 @@
-use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 
 // rudimentary types
 pub type OrderId = u64;
@@ -61,7 +61,7 @@ impl Order {
         match (self.order_type, other.order_type) {
             (OrderType::Limit, OrderType::Limit) => {
                 if self.side == Side::Buy {
-                    self.price >= other.price // 
+                    self.price >= other.price //
                 } else {
                     self.price <= other.price
                 }
@@ -97,6 +97,9 @@ impl Trade {
     }
 }
 
+// view the return ordering as a sort_by() method's idiomatic priority (where the 'lesser' value is the one
+// that'll be towards the front of the queue) than literal priority
+// (where the 'greater' value would imply a higher priority)
 pub fn compare_buy_orders(a: &Order, b: &Order) -> Ordering {
     match a.price.cmp(&b.price) {
         Ordering::Greater => Ordering::Less,

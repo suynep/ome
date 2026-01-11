@@ -2,7 +2,7 @@
 //
 //
 
-use crate::order::{Order, OrderId, Side, compare_buy_orders, compare_sell_orders};
+use crate::order::{compare_buy_orders, compare_sell_orders, Order, OrderId, Side};
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 pub struct OrderBook {
@@ -15,8 +15,8 @@ pub struct OrderBook {
 impl OrderBook {
     pub fn new() -> Self {
         OrderBook {
-            bids: BTreeMap::new(),
-            asks: BTreeMap::new(),
+            bids: BTreeMap::<u64, Vec<Order>>::new(),
+            asks: BTreeMap::<u64, Vec<Order>>::new(),
             orders_map: HashMap::<OrderId, (Side, u64)>::new(),
             canceled_orders: HashSet::<OrderId>::new(),
         }
@@ -240,7 +240,7 @@ mod tests {
 
         // Test that we can add and retrieve orders with get_* methods
         let buy1 = Order::new(1, Side::Buy, OrderType::Limit, 1000, 100, 2);
-        let buy2= Order::new(2, Side::Buy, OrderType::Limit, 1001, 100, 5);
+        let buy2 = Order::new(2, Side::Buy, OrderType::Limit, 1001, 100, 5);
         book.add_order(buy1);
         book.add_order(buy2);
 
