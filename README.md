@@ -135,6 +135,11 @@ Fetch the current orderbook:
 curl -s http://localhost:61666/orderbook | jq
 ```
 
+Cancel an order by ID:
+```bash
+curl -X DELETE "http://localhost:61666/orders/<id>/cancel" | jq
+```
+
 ## Reproducing the Example in the given `pdf`
 #### Start the server
 ```bash
