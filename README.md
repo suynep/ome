@@ -149,31 +149,23 @@ cargo run
 > Note that we are using **Cents** as the primary currency (instead of dollars) in order to avoid floating point precision issues (for bulky order trades)
 
 ```bash
-curl -X POST "http://localhost:61666/orders" \
--H "Content-Type: application/json" \
--d '{"side": "Buy", "order_type": "Limit", "price": 950, "quantity": 100}' | jq
+curl -X POST "http://localhost:61666/orders" -H "Content-Type: application/json" -d '{"side": "Buy", "order_type": "Limit", "price": 950, "quantity": 100}' | jq
 ```
 
 *Note: To execute the above `cURL` request, you need to install `curl` and `jq` packages from your distros package manager*
 
 
 ```bash
-curl -X POST "http://localhost:61666/orders" \ 
--H "Content-Type: application/json" \
--d '{"side": "Buy", "order_type": "Limit", "price": 900, "quantity": 200}' | jq
+curl -X POST "http://localhost:61666/orders" -H "Content-Type: application/json" -d '{"side": "Buy", "order_type": "Limit", "price": 900, "quantity": 200}' | jq
  ```
 
 
 ```bash
-curl -X POST "http://localhost:61666/orders" \
--H "Content-Type: application/json" \
--d '{"side": "Sell", "order_type": "Limit", "price": 1050, "quantity": 150}' | jq
+curl -X POST "http://localhost:61666/orders" -H "Content-Type: application/json" -d '{"side": "Sell", "order_type": "Limit", "price": 1050, "quantity": 150}' | jq
  ```
 
  ```bash
-curl -X POST "http://localhost:61666/orders" \
--H "Content-Type: application/json" \
--d '{"side": "Sell", "order_type": "Limit", "price": 1000, "quantity": 100}' | jq
+curl -X POST "http://localhost:61666/orders" -H "Content-Type: application/json" -d '{"side": "Sell", "order_type": "Limit", "price": 1000, "quantity": 100}' | jq
  ```
 
  > At this point, all orders (from the example in pdf) are added however none are resolved because of price mismatch
@@ -181,9 +173,7 @@ curl -X POST "http://localhost:61666/orders" \
  #### Add the order that essentially executes a Trade
 
  ```bash
-curl -X POST "http://localhost:61666/orders" \
--H "Content-Type: application/json" \
--d '{"side": "Buy", "order_type": "Limit", "price": 1050, "quantity": 150}' | jq
+curl -X POST "http://localhost:61666/orders" -H "Content-Type: application/json" -d '{"side": "Buy", "order_type": "Limit", "price": 1050, "quantity": 150}' | jq
  ```
 
  **Note the response at this point** (especially the `trade` field, which shows the matches of each pre-existing order). The output you see is the one expected in the `pdf`. *QED*.
