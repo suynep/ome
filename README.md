@@ -11,7 +11,8 @@ This project implements a complete order matching engine similar to those used i
 
 ## Assumptions
 1. *Market Orders* are *canceled* when there is no Order in the oppposing side
-2. *Timestamps* are POSIX time *(current implementation uses `u64` starting from `1`, however, since POSIX timestamps are `u64`s there should be a bijection between this implementation and the actual timestamp implementation)*
+2. *Price* field is in Cents *(implemented as `u64` instead of `f32/f64` to avoid dealing with floating-point precision issues)*
+3. *Timestamps* are POSIX time *(current implementation uses `u64` starting from `1`, however, since POSIX timestamps are `u64`s there should be a bijection between this implementation and the actual timestamp implementation)*
 
 ## Architecture
 
