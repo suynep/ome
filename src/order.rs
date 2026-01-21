@@ -130,7 +130,7 @@ impl fmt::Display for Trade {
     }
 }
 
-pub fn compare_buy_orders(o1: &Order, o2: &Order) -> Ordering {
+pub fn _compare_buy_orders(o1: &Order, o2: &Order) -> Ordering {
     match o1.price.cmp(&o2.price) {
         Ordering::Less => Ordering::Greater,
         Ordering::Greater => Ordering::Less,
@@ -138,7 +138,7 @@ pub fn compare_buy_orders(o1: &Order, o2: &Order) -> Ordering {
     }
 }
 
-pub fn compare_sell_orders(o1: &Order, o2: &Order) -> Ordering {
+pub fn _compare_sell_orders(o1: &Order, o2: &Order) -> Ordering {
     match o1.price.cmp(&o2.price) {
         Ordering::Less => Ordering::Less,
         Ordering::Greater => Ordering::Greater,
@@ -166,12 +166,12 @@ mod test {
         let o1 = Order::new("1".to_string(), Side::Buy, OrderType::Limit, 2000, 10, 1);
         let o2 = Order::new("2".to_string(), Side::Buy, OrderType::Limit, 2000, 20, 2);
 
-        assert_eq!(compare_buy_orders(&o1, &o2), Ordering::Greater);
+        assert_eq!(_compare_buy_orders(&o1, &o2), Ordering::Greater);
 
         let ot1 = Order::new("1".to_string(), Side::Buy, OrderType::Limit, 2000, 10, 1);
         let ot2 = Order::new("2".to_string(), Side::Buy, OrderType::Limit, 2000, 10, 2);
 
-        assert_eq!(compare_buy_orders(&ot1, &ot2), Ordering::Less);
+        assert_eq!(_compare_buy_orders(&ot1, &ot2), Ordering::Less);
     }
 
     #[test]
@@ -179,11 +179,11 @@ mod test {
         let o1 = Order::new("1".to_string(), Side::Sell, OrderType::Limit, 2000, 10, 1);
         let o2 = Order::new("2".to_string(), Side::Sell, OrderType::Limit, 2000, 20, 2);
 
-        assert_eq!(compare_sell_orders(&o1, &o2), Ordering::Less);
+        assert_eq!(_compare_sell_orders(&o1, &o2), Ordering::Less);
 
         let ot1 = Order::new("1".to_string(), Side::Sell, OrderType::Limit, 2000, 10, 1);
         let ot2 = Order::new("2".to_string(), Side::Sell, OrderType::Limit, 2000, 10, 2);
 
-        assert_eq!(compare_sell_orders(&ot1, &ot2), Ordering::Less);
+        assert_eq!(_compare_sell_orders(&ot1, &ot2), Ordering::Less);
     }
 }

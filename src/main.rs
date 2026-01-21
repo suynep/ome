@@ -51,7 +51,7 @@ struct CancelResponse {
 
 #[derive(Debug, Serialize)]
 struct AllTradesResponse {
-    trades: Option<Vec<Trade>>,
+    trades: Vec<Trade>,
 }
 
 #[tokio::main]
@@ -103,7 +103,9 @@ async fn post_order(
         price,
         ts.try_into().unwrap(),
     );
+
     let trades = engine.submit_order(order.clone()).await;
+
     // let bids = engine.get_buy_orders().await;
     // let asks = engine.get_sell_orders().await;
     if trades.len() == 0 {
@@ -130,8 +132,10 @@ async fn cancel_order(
 }
 
 async fn get_all_trades(State(engine): State<MatchingEngine>) -> Json<AllTradesResponse> {
-    let result = engine.trades.read().await;
-    Json(AllTradesResponse {
-        trades: Some(result.to_vec()),
-    })
+    let trades_guard = engine.trades.read().await;
+    let trades_vec: Vec<Trade> = trades_guard
+        .iter()
+        .map(|arc_trade| (*arc_trade).clone())
+        .collect();
+    Json(AllTradesResponse { trades: trades_vec })
 }

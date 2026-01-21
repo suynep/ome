@@ -3,19 +3,24 @@ use crate::{
     orderbook::OrderBook,
 };
 
+use std::collections::VecDeque;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+pub const TRADE_POOL_SIZE: usize = 500; // defines the size of MatchingEngine::new().trades field
+
 pub struct MatchingEngine {
     order_book: Arc<RwLock<OrderBook>>,
-    pub trades: Arc<RwLock<Vec<Trade>>>,
+    pub trades: Arc<RwLock<VecDeque<Trade>>>,
 }
 
 impl MatchingEngine {
     pub fn new() -> Self {
         MatchingEngine {
             order_book: Arc::new(RwLock::new(OrderBook::new())),
-            trades: Arc::new(RwLock::new(Vec::new())),
+            trades: Arc::new(RwLock::new(VecDeque::<Trade>::with_capacity(
+                TRADE_POOL_SIZE,
+            ))),
         }
     }
 
@@ -87,7 +92,14 @@ impl MatchingEngine {
 
         {
             let mut trades = self.trades.write().await;
-            trades.extend(new_trades.clone());
+            for trade in new_trades.clone() {
+                if trades.len() >= TRADE_POOL_SIZE {
+                    trades.pop_front();
+                }
+
+                trades.push_back(trade);
+            }
+            // trades.extend(new_trades.clone());
         }
 
         new_trades
@@ -127,6 +139,8 @@ impl Clone for MatchingEngine {
 
 #[cfg(test)]
 mod test {
+    use rand::Rng;
+
     use super::*;
     #[tokio::test]
     async fn test_submit_order() {
@@ -185,5 +199,45 @@ mod test {
         println!("{}", me.order_book.read().await);
         println!("TRADES: {:?}", me.trades.read().await);
         println!("ORDER_MAP: {:?}", me.order_book.read().await.order_map);
+    }
+
+    #[tokio::test]
+    async fn test_trade_pool_size_timestamp() {
+        use rand::rng;
+        let mut rng = rng();
+        let mut engine = MatchingEngine::new();
+        const BUY_MOCK_SIZE: usize = 1500000;
+        const SELL_MOCK_SIZE: usize = 1500000;
+        for i in 0..BUY_MOCK_SIZE {
+            let price = rng.random_range(800..=1000);
+            let quantity = rng.random_range(100..=200);
+            let order = Order::new(
+                format!("{i}"),
+                Side::Buy,
+                OrderType::Limit,
+                quantity,
+                price,
+                i.try_into().unwrap(),
+            );
+            engine.submit_order(order).await;
+        }
+
+        for i in 0..SELL_MOCK_SIZE {
+            let price = rng.random_range(800..=1000);
+            let quantity = rng.random_range(100..=200);
+            let order = Order::new(
+                format!("{i}"),
+                Side::Sell,
+                OrderType::Limit,
+                quantity,
+                price,
+                i.try_into().unwrap(),
+            );
+            engine.submit_order(order).await;
+        }
+
+        println!("{:?}", engine.trades.read().await);
+
+        println!("\n{}", engine.trades.read().await.len());
     }
 }

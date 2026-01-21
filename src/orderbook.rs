@@ -3,7 +3,7 @@ use std::{
     fmt,
 };
 
-use crate::order::{Order, OrderId, OrderType, Price, Quantity, Side};
+use crate::order::{Order, OrderId, Price, Quantity, Side};
 
 pub struct OrderBook {
     pub bids: BTreeMap<Price, Vec<Order>>,
@@ -187,6 +187,7 @@ impl OrderBook {
 
         buy_orders
     }
+
     pub fn get_sell_orders(&self) -> Vec<Order> {
         let mut sell_orders = Vec::<Order>::new();
         for (_, v) in self.asks.iter() {
@@ -194,7 +195,6 @@ impl OrderBook {
                 sell_orders.push(bo.clone());
             }
         }
-
         sell_orders
     }
 }
@@ -233,6 +233,7 @@ impl Clone for OrderBook {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::order::OrderType;
 
     #[test]
     fn test_orderbook_display_format() {

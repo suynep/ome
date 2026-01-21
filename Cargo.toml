@@ -6,11 +6,8 @@ edition = "2024"
 [dependencies]
 axum = "0.8.8"
 chrono = "0.4.43"
-criterion = "0.8.1"
+rand = "0.9.2"
 serde = {version = "1.0.228", features=["derive"]}
 tokio = {version="1.49.0", features=["full"]}
 uuid = {version = "1.19.0", features=["v4"]}
 
-[[bench]]
-name = "ome-benchmarks"
-harness = false
