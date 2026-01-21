@@ -31,3 +31,7 @@ total memory leaked: 23.90K
 This result seems quite good (~260M peak after removing unnecessary heap allocations).
 
 
+- The above example benchmark was reproduced using `heaptrack` and the following command:
+  - `cargo test --no-run matchingengine::test::test_trade_pool_size_timestamp` which generates a test binary at `target/debug/deps/<hash>` (*Note: `hash` is obtained in the stdout of the above cmd*)
+  - `heaptrack ./target/debug/deps/<hash> test_trade_pool_size_timestamp --nocapture` which effectively runs the benchmarking and outputs a new command that should be invoked again.
+  - the format of the command for actual results is: `heaptrack --analyze "<path_to_file>.zst"`
