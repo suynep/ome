@@ -1,6 +1,7 @@
 # Order Matching Engine
 
 > An OME featuring price/time priority matching methodology implemented with <3, BTreeMaps, and GTC orders
+> Current Changelog contains a benchmark information (used Heaptrack `sudo apt install heaptrack`)
 
 
 > Jump to [Reproducing the PDF example](https://github.com/suynep/ome?tab=readme-ov-file#reproducing-the-example-in-the-given-pdf) section

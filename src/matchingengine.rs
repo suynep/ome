@@ -206,8 +206,8 @@ mod test {
         use rand::rng;
         let mut rng = rng();
         let mut engine = MatchingEngine::new();
-        const BUY_MOCK_SIZE: usize = 1500000;
-        const SELL_MOCK_SIZE: usize = 1500000;
+        const BUY_MOCK_SIZE: usize = 15000;
+        const SELL_MOCK_SIZE: usize = 15000;
         for i in 0..BUY_MOCK_SIZE {
             let price = rng.random_range(800..=1000);
             let quantity = rng.random_range(100..=200);

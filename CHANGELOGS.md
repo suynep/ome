@@ -8,6 +8,8 @@
 - `VecDeque` for handling unbounded `trades` field growth of `MatchingEngine` (current cap at 500)
 
 ### Fixed
+- FIX: Market Order accumulation in cancel sets and orders map
+- FIX: Remove lazy deletion to implement eviction on-spot
 - Unnecessary Heap Allocations 
 - Orders not being flushed on cancellation
 
