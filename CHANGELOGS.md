@@ -1,6 +1,5 @@
 # Change Log
 
-## 2026-01-20
 
 ### Changed 
 - `uuid4` ids for the `id` field of `Order`
