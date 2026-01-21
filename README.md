@@ -18,7 +18,6 @@ This project implements a complete order matching engine similar to those used i
 ## Assumptions
 1. *Market Orders* are *canceled* when there is no Order in the oppposing side
 2. [No longer Holds → Currently, the application supports both `f64` prices (in dollars), and `u64` prices (in cents)] *Price* field is in Cents *(implemented as `u64` instead of `f32/f64` to avoid dealing with floating-point precision issues)*
-3. *Timestamps* are POSIX time *(current implementation uses `u64` starting from `1`, however, since POSIX timestamps are `u64`s there should be a bijection between this implementation and the actual timestamp implementation)*
 
 ## Architecture
 
@@ -40,7 +39,6 @@ Manages active orders using price levels with FIFO queues:
 - **Buy Orders (Bids)**: `BTreeMap<price, Vec<Order>>` iterated in descending price
 - **Sell Orders (Asks)**: `BTreeMap<price, Vec<Order>>` iterated in ascending price
 - **Time Priority**: Within each price level, orders are kept sorted by timestamp (earlier first)
-- **Lazy Deletion**: Canceled orders are marked and skipped during matching
 
 **Design Choices:**
 - `BTreeMap` provides ordered traversal by price for predictable matching
@@ -145,6 +143,11 @@ curl -s http://localhost:61666/orderbook | jq
 Cancel an order by ID:
 ```bash
 curl -X DELETE "http://localhost:61666/orders/<id>/cancel" | jq
+```
+
+**Get the most recent 500 trades**:
+```bash
+curl -X GET "http://localhost:61666/trades" | jq
 ```
 
 ## Reproducing the Example in the given `pdf`
